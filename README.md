@@ -95,4 +95,3 @@ test/
 - `npm test -- --coverage` – with coverage
 - `npm run lint` – ESLint check
 
-Enjoy the lab!
