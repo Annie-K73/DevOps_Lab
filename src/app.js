@@ -14,10 +14,10 @@ import { createRequire } from 'node:module'
 import { errorHandler } from './utils/errorHandler.js'
 
 // IGGT routes (Lab 5)
-import gardensRouter from './routes/gardens.route.js'
-import speciesRouter from './routes/species.route.js'
-import plantsRouter from './routes/plants.route.js'
-import careLogsRouter from './routes/careLogs.route.js'
+import gardensRouter from './routes/auto/gardens.route.js'
+import speciesRouter from './routes/auto/species.route.js'
+import plantsRouter from './routes/auto/plants.route.js'
+import careLogsRouter from './routes/auto/careLogs.route.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
