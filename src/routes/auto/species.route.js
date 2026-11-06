@@ -5,35 +5,28 @@ import { parse } from 'csv-parse/sync'
 
 const router = express.Router()
 
-// Path to the CSV database
+// Chemin vers le CSV situé dans DevOps_Lab/data/
 const csvPath = fileURLToPath(
-  new URL('../../data/waterwise-plants.csv', import.meta.url)
+  new URL('../../../data/waterwise-plants.csv', import.meta.url)
 )
 
-// Cache the CSV data to avoid reading the file on every request
 let speciesCache = null
 
 async function getSpecies() {
   if (!speciesCache) {
-    try {
-      const csvContent = await readFile(csvPath, 'utf-8')
+    const csvContent = await readFile(csvPath, 'utf-8')
 
-      speciesCache = parse(csvContent, {
-        columns: true,
-        skip_empty_lines: true,
-        bom: true,
-        trim: true
-      })
-    } catch (error) {
-      speciesCache = null
-      throw error
-    }
+    speciesCache = parse(csvContent, {
+      columns: true,
+      skip_empty_lines: true,
+      bom: true,
+      trim: true
+    })
   }
 
   return speciesCache
 }
 
-// Normalize strings for case-insensitive and accent-insensitive search
 function normalize(value) {
   return String(value || '')
     .normalize('NFD')
@@ -42,14 +35,12 @@ function normalize(value) {
     .trim()
 }
 
-// GET /api/species/search?q=lavender&limit=20
-// Search species by common or botanical name
 router.get('/search', async (req, res, next) => {
   try {
     const query = req.query.q
     const limit = Number(req.query.limit ?? 20)
 
-    // Validate query parameter
+    // Validate search query
     if (typeof query !== 'string' || !query.trim()) {
       return res.status(400).json({
         success: false,
@@ -68,14 +59,14 @@ router.get('/search', async (req, res, next) => {
     const species = await getSpecies()
     const searchTerm = normalize(query)
 
-    // Search in common and botanical names
+    // Search by common name or botanical name
     const results = species
       .filter(plant => {
         const commonName = normalize(plant['Common Name'])
         const botanicalName = normalize(plant['Botanical Name'])
 
         return commonName.includes(searchTerm) ||
-               botanicalName.includes(searchTerm)
+          botanicalName.includes(searchTerm)
       })
       // Prioritize exact matches, then names starting with the query
       .sort((a, b) => {
@@ -85,6 +76,7 @@ router.get('/search', async (req, res, next) => {
 
           if (common === searchTerm || botanical === searchTerm) return 0
           if (common.startsWith(searchTerm) || botanical.startsWith(searchTerm)) return 1
+
           return 2
         }
 
@@ -93,7 +85,6 @@ router.get('/search', async (req, res, next) => {
 
     const totalMatches = results.length
 
-    // Return only useful fields for the species search
     const data = results.slice(0, limit).map(plant => ({
       id: plant['Plant ID'],
       code: plant['Plant Code'],
@@ -113,6 +104,7 @@ router.get('/search', async (req, res, next) => {
       data
     })
   } catch (error) {
+    console.error('SPECIES ROUTE ERROR:', error)
     next(error)
   }
 })

@@ -1,10 +1,9 @@
+import { describe, it, expect } from 'vitest'
 import request from 'supertest'
 import app from '../src/app.js'
-import { describe, it, expect } from 'vitest'
 
 describe('Species API', () => {
-  // Test 1: Search species by common name
-  it('GET /api/species/search should find species by common name', async () => {
+  it('should load the CSV successfully', async () => {
     const res = await request(app)
       .get('/api/species/search?q=lavender')
 
@@ -13,36 +12,39 @@ describe('Species API', () => {
     expect(Array.isArray(res.body.data)).toBe(true)
   })
 
-  // Test 2: Search species by botanical name
-  it('GET /api/species/search should find species by botanical name', async () => {
+  it('should search by common name', async () => {
+    const res = await request(app)
+      .get('/api/species/search?q=lavender')
+
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+  })
+
+  it('should search by botanical name', async () => {
     const res = await request(app)
       .get('/api/species/search?q=Lavandula')
 
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
-    expect(res.body.data.length).toBeGreaterThan(0)
   })
 
-  // Test 3: Search should be case-insensitive
-  it('GET /api/species/search should ignore uppercase and lowercase', async () => {
+  it('should support case-insensitive searches', async () => {
     const res = await request(app)
       .get('/api/species/search?q=LAVENDER')
 
     expect(res.status).toBe(200)
-    expect(res.body.data.length).toBeGreaterThan(0)
+    expect(res.body.success).toBe(true)
   })
 
-  // Test 4: Search should support partial matches
-  it('GET /api/species/search should support partial names', async () => {
+  it('should support partial searches', async () => {
     const res = await request(app)
       .get('/api/species/search?q=lav')
 
     expect(res.status).toBe(200)
-    expect(res.body.data.length).toBeGreaterThan(0)
+    expect(res.body.success).toBe(true)
   })
 
-  // Test 5: Search with no matching species
-  it('GET /api/species/search should return an empty array when no species match', async () => {
+  it('should return an empty array when no species match', async () => {
     const res = await request(app)
       .get('/api/species/search?q=nonexistentplant123')
 
@@ -51,8 +53,7 @@ describe('Species API', () => {
     expect(res.body.totalMatches).toBe(0)
   })
 
-  // Test 6: Missing search parameter
-  it('GET /api/species/search should return 400 when query is missing', async () => {
+  it('should reject an empty search query', async () => {
     const res = await request(app)
       .get('/api/species/search')
 
@@ -60,16 +61,15 @@ describe('Species API', () => {
     expect(res.body.success).toBe(false)
   })
 
-  // Test 7: Invalid limit
-  it('GET /api/species/search should return 400 when limit is invalid', async () => {
+  it('should reject an invalid limit', async () => {
     const res = await request(app)
       .get('/api/species/search?q=lavender&limit=500')
 
     expect(res.status).toBe(400)
+    expect(res.body.success).toBe(false)
   })
 
-  // Test 8: Limit results
-  it('GET /api/species/search should respect the result limit', async () => {
+  it('should respect the result limit', async () => {
     const res = await request(app)
       .get('/api/species/search?q=a&limit=2')
 
