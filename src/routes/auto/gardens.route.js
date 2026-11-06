@@ -21,4 +21,24 @@ router.post('/', (req, res) => {
   res.status(201).json(newGarden)
 })
 
+router.get('/:id', (req, res) => {
+  const garden = gardens.find(g => g.id === Number(req.params.id))
+  if (!garden) return res.status(404).json({ error: 'Garden not found' })
+  res.json(garden)
+})
+
+router.put('/:id', (req, res) => {
+  const index = gardens.findIndex(g => g.id === Number(req.params.id))
+  if (index === -1) return res.status(404).json({ error: 'Garden not found' })
+  gardens[index] = { ...gardens[index], ...req.body }
+  res.json(gardens[index])
+})
+
+router.delete('/:id', (req, res) => {
+  const index = gardens.findIndex(g => g.id === Number(req.params.id))
+  if (index === -1) return res.status(404).json({ error: 'Garden not found' })
+  gardens.splice(index, 1)
+  res.status(204).end()
+})
+
 export default router
