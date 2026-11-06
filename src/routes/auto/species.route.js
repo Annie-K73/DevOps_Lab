@@ -12,7 +12,7 @@ const csvPath = fileURLToPath(
 
 let speciesCache = null
 
-async function getSpecies() {
+async function getSpecies () {
   if (!speciesCache) {
     const csvContent = await readFile(csvPath, 'utf-8')
 
@@ -27,7 +27,7 @@ async function getSpecies() {
   return speciesCache
 }
 
-function normalize(value) {
+function normalize (value) {
   return String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
