@@ -38,15 +38,29 @@ app.use('/api/species', speciesRouter)
 app.use('/api/plants', plantsRouter)
 app.use('/api/care-logs', careLogsRouter)
 
-// Auto-mount all routers placed under src/routes/auto
+// Auto-mount additional routers, excluding explicitly mounted routers
 const autoDir = path.join(__dirname, 'routes', 'auto')
+
+const explicitlyMounted = new Set([
+  'gardens.route.js',
+  'species.route.js',
+  'plants.route.js',
+  'careLogs.route.js'
+])
+
 if (fs.existsSync(autoDir)) {
-  const files = fs.readdirSync(autoDir).filter(f => f.endsWith('.route.js'))
-  for (const f of files) {
-    const full = path.join(autoDir, f)
+  const files = fs.readdirSync(autoDir).filter(
+    file => file.endsWith('.route.js') && !explicitlyMounted.has(file)
+  )
+
+  for (const file of files) {
+    const full = path.join(autoDir, file)
     const mod = require(full)
     const router = mod.default || mod
-    if (router) app.use('/', router)
+
+    if (router) {
+      app.use('/', router)
+    }
   }
 }
 

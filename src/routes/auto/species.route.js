@@ -1,3 +1,4 @@
+
 import express from 'express'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -5,7 +6,6 @@ import { parse } from 'csv-parse/sync'
 
 const router = express.Router()
 
-// Chemin vers le CSV situé dans DevOps_Lab/data/
 const csvPath = fileURLToPath(
   new URL('../../../data/waterwise-plants.csv', import.meta.url)
 )
@@ -35,12 +35,12 @@ function normalize (value) {
     .trim()
 }
 
+// GET search by common or botanical name
 router.get('/search', async (req, res, next) => {
   try {
     const query = req.query.q
     const limit = Number(req.query.limit ?? 20)
 
-    // Validate search query
     if (typeof query !== 'string' || !query.trim()) {
       return res.status(400).json({
         success: false,
@@ -48,7 +48,6 @@ router.get('/search', async (req, res, next) => {
       })
     }
 
-    // Validate result limit
     if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
       return res.status(400).json({
         success: false,
@@ -59,7 +58,6 @@ router.get('/search', async (req, res, next) => {
     const species = await getSpecies()
     const searchTerm = normalize(query)
 
-    // Search by common name or botanical name
     const results = species
       .filter(plant => {
         const commonName = normalize(plant['Common Name'])
@@ -68,7 +66,6 @@ router.get('/search', async (req, res, next) => {
         return commonName.includes(searchTerm) ||
           botanicalName.includes(searchTerm)
       })
-      // Prioritize exact matches, then names starting with the query
       .sort((a, b) => {
         const score = plant => {
           const common = normalize(plant['Common Name'])
@@ -104,7 +101,143 @@ router.get('/search', async (req, res, next) => {
       data
     })
   } catch (error) {
-    console.error('SPECIES ROUTE ERROR:', error)
+    next(error)
+  }
+})
+
+// GET species by ID
+router.get('/:id', async (req, res, next) => {
+  try {
+    const species = await getSpecies()
+
+    const plant = species.find(
+      item => String(item['Plant ID']) === req.params.id
+    )
+
+    if (!plant) {
+      return res.status(404).json({
+        error: 'Species not found'
+      })
+    }
+
+    return res.status(200).json(plant)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// GET all species
+router.get('/', async (req, res, next) => {
+  try {
+    const species = await getSpecies()
+    return res.status(200).json(species)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// POST create a species
+router.post('/', async (req, res, next) => {
+  try {
+    const species = await getSpecies()
+    const newPlant = req.body
+
+    if (!newPlant || typeof newPlant !== 'object' || Array.isArray(newPlant)) {
+      return res.status(400).json({
+        error: 'Invalid request body'
+      })
+    }
+
+    const requiredFields = [
+      'Plant ID',
+      'Botanical Name',
+      'Common Name'
+    ]
+
+    const missingFields = requiredFields.filter(
+      field => !String(newPlant[field] ?? '').trim()
+    )
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        missingFields
+      })
+    }
+
+    const existingPlant = species.find(
+      plant => String(plant['Plant ID']) === String(newPlant['Plant ID'])
+    )
+
+    if (existingPlant) {
+      return res.status(409).json({
+        error: 'A species with this ID already exists'
+      })
+    }
+
+    species.push(newPlant)
+
+    return res.status(201).json(newPlant)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// PUT update a species
+router.put('/:id', async (req, res, next) => {
+  try {
+    const species = await getSpecies()
+
+    const index = species.findIndex(
+      plant => String(plant['Plant ID']) === req.params.id
+    )
+
+    if (index === -1) {
+      return res.status(404).json({
+        error: 'Species not found'
+      })
+    }
+
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+      return res.status(400).json({
+        error: 'Invalid request body'
+      })
+    }
+
+    // The ID cannot be changed
+    const { ['Plant ID']: ignoredId, ...updates } = req.body
+
+    species[index] = {
+      ...species[index],
+      ...updates,
+      'Plant ID': species[index]['Plant ID']
+    }
+
+    return res.status(200).json(species[index])
+  } catch (error) {
+    next(error)
+  }
+})
+
+// DELETE a species
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const species = await getSpecies()
+
+    const index = species.findIndex(
+      plant => String(plant['Plant ID']) === req.params.id
+    )
+
+    if (index === -1) {
+      return res.status(404).json({
+        error: 'Species not found'
+      })
+    }
+
+    species.splice(index, 1)
+
+    return res.status(204).end()
+  } catch (error) {
     next(error)
   }
 })
