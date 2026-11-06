@@ -6,7 +6,6 @@ const allowedActions = ['arrosage', 'engrais', 'rempotage', 'taille']
 const allowedKinds = ['care', 'observation']
 const allowedSources = ['user', 'sensor']
 
-
 let careLogs = [
   { id: 1, plantId: 1, kind: 'care', action: 'arrosage', heightCm: 25, symptoms: ['dots', 'dryness'], photoUrl: '', source: 'user', date: '2026-11-01T10:00:00.000Z' },
   { id: 2, plantId: 2, kind: 'observation', action: 'engrais', heightCm: 43, symptoms: ['holes'], photoUrl: '', source: 'sensor', date: '2026-11-02T09:30:00.000Z' }
