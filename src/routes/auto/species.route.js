@@ -1,4 +1,3 @@
-
 import express from 'express'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -205,7 +204,7 @@ router.put('/:id', async (req, res, next) => {
     }
 
     // The ID cannot be changed
-    const { ['Plant ID']: ignoredId, ...updates } = req.body
+    const { 'Plant ID': ignoredId, ...updates } = req.body
 
     species[index] = {
       ...species[index],
